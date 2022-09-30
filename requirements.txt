@@ -77,6 +77,10 @@ Pygments==2.9.0
 pyOpenSSL==20.0.1
 pyparsing==2.4.7
 pyproj==3.2.1
+PyQt5==5.12.3
+PyQt5_sip==4.19.18
+PyQtChart==5.12
+PyQtWebEngine==5.12.1
 pyrsistent==0.17.3
 PySocks==1.7.1
 python-dateutil==2.8.2
@@ -90,6 +94,7 @@ requests==2.26.0
 requests-unixsocket==0.2.0
 scipy==1.7.0
 Send2Trash==1.7.1
+setuptools==49.6.0.post20210108
 six==1.16.0
 sniffio==1.2.0
 terminado==0.10.1
