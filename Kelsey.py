@@ -29,6 +29,8 @@ from scipy import stats
 #import yaml
 from bokeh.themes import Theme
 from bokeh.models import ColumnDataSource, Slider , Dropdown, Select, PreText, Label, Slope, Band
+from bokeh.models import (Button, ColumnDataSource, CustomJS, DataTable,
+                          NumberFormatter, RangeSlider, TableColumn)
 from bokeh.layouts import row,column
 # make a simple plot time-series
 
@@ -51,6 +53,16 @@ else:
     
     
 df = pd.read_csv('dummy.csv')
+col_names = df.columns[df.columns.str.contains(pat = 'TREF')]
+
+for col in col_names:
+    df[col] = (df[col]-273.15)*1.8 +32
+    
+col_names = df.columns[df.columns.str.contains(pat = 'PREC')]
+
+for col in col_names:
+    df[col] = (df[col])*1242399685.04
+
 df_all = df
 
 df['time'] =  pd.to_datetime(df['time'], infer_datetime_format=True)
@@ -296,8 +308,8 @@ def shaded_tseries(doc):
     freq_list = ['Monthly','Annual','Decadal']
     plot_vars = ['TREFHTMN', 'TREFHTMX','PRECT','SOILWATER_10CM']
     
-    vars_dict = {'TREFHTMN': 'Minimum temperature [K]', 'TREFHTMX': 'Maximum temperature [K]',\
-     'PRECT': 'Total  precipitation rate','SOILWATER_10CM': 'Soil liquid water [kg/m²] '}
+    vars_dict = {'TREFHTMN': 'Minimum Temperature', 'TREFHTMX': 'Maximum Temperature',\
+     'PRECT': 'Total  Precipitation','SOILWATER_10CM': 'Soil liquid water [kg/m²] '}
 
     a = list(range(0,19+1))
     ens_list=[str(x) for x in a]
@@ -351,16 +363,16 @@ def shaded_tseries(doc):
 
     def update_yaxis (attr, old, new):
         if (vars_dict2[menu.value]=='TREFHTMN'):
-            p.yaxis.axis_label = 'Minimum temperature [K]'
-            q.yaxis.axis_label = 'Minimum temperature [K]'
+            p.yaxis.axis_label = 'Minimum Temperature [°F]'
+            q.yaxis.axis_label = 'Minimum Temperature [°F]'
 
         elif (vars_dict2[menu.value]=='TREFHTMX'):
-            p.yaxis.axis_label = 'Maximum temperature [K]'
-            q.yaxis.axis_label = 'Maximum temperature [K]'
+            p.yaxis.axis_label = 'Maximum Temperature [°F]'
+            q.yaxis.axis_label = 'Maximum Temperature [°F]'
 
         elif (vars_dict2[menu.value]=='PRECT'):
-            p.yaxis.axis_label = 'Total  precipitation rate [m/s]'
-            q.yaxis.axis_label = 'Total  precipitation rate [m/s]'
+            p.yaxis.axis_label = 'Total  Precipitation [inch/year]'
+            q.yaxis.axis_label = 'Total  Precipitation [inch/year]'
 
         elif (vars_dict2[menu.value]=='SOILWATER_10CM'):
             p.yaxis.axis_label = 'Soil liquid water [kg/m2] '
@@ -415,9 +427,12 @@ def shaded_tseries(doc):
     source2.selected.on_change('indices', selection_change)
     source2.selected.on_change('indices', selection_change)
     
+    button = Button(label="Download", button_type="success")
+    button.js_on_event("button_click", CustomJS(args=dict(source=source),
+                    code=open(join('.', "download.js")).read()))
     
     #layout = row(column(menu, menu_freq, menu_site, q),  p)
-    layout = row(p, column( menu, menu_freq, q))
+    layout = row(p, column( menu, menu_freq, q, button))
     
 
 
@@ -451,6 +466,7 @@ def shaded_tseries(doc):
     doc.add_root(layout)
     source.selected.on_change('indices', selection_change)
     source2.selected.on_change('indices', selection_change)
+
 
     doc.theme = Theme(json=yaml.load("""
         attrs:
