@@ -60,6 +60,7 @@ df_all['month'] = df_all['time'].dt.month
 df_all['day'] = df_all['time'].dt.day
 df_all['hour'] = df_all['time'].dt.hour
 
+print (df_all)
 def get_data (df_all, var, ens, freq='Monthly'):
     df = df_all
     #df_new = df_all
@@ -180,7 +181,7 @@ def get_shaded_data(df_all, var, ens, freq='Monthly'):
         
     #print('=-====')
     #print(df_out)
-    #print('=-====')
+    print (df_monthly)
 
     return df_out, df_monthly 
 
@@ -307,6 +308,7 @@ def shaded_tseries(doc):
     #menu = Select(options=plot_vars,value='Average', title='Variable') 
 
     menu_ens = Select(options=ens_list,value=default_ens, title='Ensemble #') 
+    #menu_ens = Dropdown(menu=ens_list, label='Ensemble #') 
     menu_freq = Select(options=freq_list,value=default_freq, title='Frequency') 
 
 
@@ -343,6 +345,7 @@ def shaded_tseries(doc):
         
         #source = ColumnDataSource(df_new)
         source.data =df_new
+        source2.data = df_monthly
         #source.stream(df_new)
 
 
@@ -364,19 +367,20 @@ def shaded_tseries(doc):
             q.yaxis.axis_label = 'Soil liquid water [kg/m2] '
 
 
-            
-
-            
+    def handler(event):
+        print(event.item)        
             
     menu.on_change('value', update_variable)
     menu.on_change('value', update_yaxis)
 
+    #menu_ens.on_click(handler)
+    #menu_ens.on_click(update_variable)
     menu_ens.on_change('value', update_variable)
     menu_freq.on_change('value', update_variable)
     
     def selection_change(attrname, old, new):
         #print ("calling dsjkghkjasdhgkjads")
-        df_new, df_monthly = get_shaded_data(df_all, vars_dict2[menu.value], menu_ens.value)
+        df_new, df_monthly = get_shaded_data(df_all, vars_dict2[menu.value], menu_ens.value, menu_freq.value)
         selected = source.selected.indices
         #print ('selected:', selected)
         #print (type (selected))
@@ -388,9 +392,9 @@ def shaded_tseries(doc):
             year_max = df_new['year'].max()
             #print (year_min)
             #print (year_max)
-            #print (df_new)
-
-            df_monthly = df_new.groupby('month').mean()
+            print (df_new)
+            this_df = df_all.loc[(df_all['year']>=year_min) & (df_all['year']<=year_max)]
+            df_new2, df_monthly = get_shaded_data(this_df, vars_dict2[menu.value], menu_ens.value, menu_freq.value)
         else:
             print ('selected is empty')
         
@@ -400,6 +404,8 @@ def shaded_tseries(doc):
             q.title.text ="Seasonal Cycle for "+str(year_min)+"-"+ str(year_max)
         #update_stats(df_new)
         #print (qpoints.data_source.data )
+        print (df_monthly)
+        source2.data = df_monthly
         qpoints.data_source.data  =  df_monthly
         qlines.data_source.data  =  df_monthly
 
@@ -407,10 +413,11 @@ def shaded_tseries(doc):
     source.selected.on_change('indices', selection_change)
     source.selected.on_change('indices', selection_change)
     source2.selected.on_change('indices', selection_change)
+    source2.selected.on_change('indices', selection_change)
     
     
     #layout = row(column(menu, menu_freq, menu_site, q),  p)
-    layout = row(p, column( menu, menu_freq, menu_ens, q))
+    layout = row(p, column( menu, menu_freq, q))
     
 
 
