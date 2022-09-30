@@ -2,22 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
+    <style>
+      @import url('https://fonts.googleapis.com/css?family=Quicksand');
+      body {
+        font-family: "Quicksand";
+      }
+      .bk-root {
+         font-family: "QuickSand" !important;
+         font-weight: "Bold";
+         font-size:19px
+      }
+      {% include 'styles.css' %}
+    </style>
     {{ bokeh_css }}
     {{ bokeh_js }}
   </head>
-  <style>
-    @import url('https://fonts.googleapis.com/css?family=Quicksand');
-    body {
-        font-family: "Quicksand";
-    }
-
-    {% include 'styles.css' %}
-    .bk-root {
-        font-family: "QuickSand" !important;
-        font-weight: "Bold";
-        font-size:19px
-    }
-  </style>
   <body>
     {{ plot_div|indent(8) }}
     {{ plot_script|indent(8) }}

@@ -103,7 +103,7 @@ def get_data (df_all, var, ens, freq='Monthly'):
         df_dumb_std = df_new.groupby('year').std().reset_index()
         df_dumb["month"] =6
         df_dumb["day"]=30
-        print (df_dumb)
+        print (df_dumb.tail)
         df_dumb['time']=pd.to_datetime(df_dumb[["year", "month","day"]])
         print(df_dumb)
         
@@ -126,9 +126,9 @@ def get_data (df_all, var, ens, freq='Monthly'):
         df_dumb["day"]=1
         df_dumb["month"]=1
         df_dumb["year"]= df_dumb["time"]
-        print(df_dumb)
 
         df_dumb['time']=pd.to_datetime(df_dumb[["year", "month","day"]])
+        print(df_dumb)
         print ('----')
         df_out = pd.DataFrame({'time':df_dumb['time'],'month': df_dumb['month'], 'var':df_dumb['var']})
         df_out['var_lower'] = df_dumb['var']-df_dumb_std['var']
@@ -182,17 +182,23 @@ def get_shaded_data(df_all, var, ens, freq='Monthly'):
         df_dumb["year"]= df_dumb["time"]
         df_dumb['time']=pd.to_datetime(df_dumb[["year", "month","day"]])
         col_names = df.columns[df.columns.str.contains(pat = var)]
+        print (df_dumb)
         #print (col_names)
         this =  df_dumb[col_names].mean(axis=1) 
         this_std = df_dumb[col_names].std(axis=1)
-        
+        this_std.iloc[-1] = this_std.iloc[-2]
         df_out = pd.DataFrame({'time':df_dumb['time'],'month': df_dumb['month'], 'var':this})
         
         df_out['var_lower'] = this-this_std
         df_out['var_upper'] = this+this_std
+        print (type(this))
+        print ('this std -1')
+        #print (this_std[-1])
+        #df_out['var_lower'][-1] = df_out['var_lower'][0]
+        #df_out['var_upper'][-1] = df_out['var_upper'][0]
         
     #print('=-====')
-    #print(df_out)
+    print(df_out)
     print (df_monthly)
 
     return df_out, df_monthly 
@@ -239,14 +245,14 @@ def shaded_tseries(doc):
         
         p.xaxis.major_label_text_color = 'dimgray'
         p.xaxis.major_label_text_font_size = '18px'
-        p.xaxis.major_label_text_font_style = "bold"
+        #p.xaxis.major_label_text_font_style = "bold"
 
-        p.yaxis.major_label_text_color = 'dimgray'
-        p.yaxis.major_label_text_font_size = '18px'
-        p.yaxis.major_label_text_font_style = "bold"
+        #p.yaxis.major_label_text_color = 'dimgray'
+        #p.yaxis.major_label_text_font_size = '18px'
+        #p.yaxis.major_label_text_font_style = "bold"
 
-        p.xaxis.axis_label_text_font = 'QuickSand'
-        p.yaxis.axis_label_text_font = 'QuickSand'
+        p.xaxis.axis_label_text_font = 'Verdana'
+        p.yaxis.axis_label_text_font = 'Verdana'
         p.xaxis.axis_label_text_font_size = "15pt"
         p.xaxis.axis_label_text_font_style = "bold"
         
@@ -256,10 +262,10 @@ def shaded_tseries(doc):
         p.axis.axis_label_text_font_style = "bold"
         
         p.grid.grid_line_alpha = 0.5
-        p.title.text_font_size = '18pt'
+        p.title.text_font_size = '21pt'
         p.xaxis.axis_label = 'Time'
         p.yaxis.axis_label = 'Soil Moisture [kg/m²]'
-        p.title.text_font = 'QuickSand'
+        p.title.text_font = 'Verdana'
         p.title.text = "Willamette Valley (45°N, 123°W)"
         
         #p.legend.location = "top_right"
@@ -276,18 +282,18 @@ def shaded_tseries(doc):
 
         q.xaxis.major_label_text_color = 'dimgray'
         q.xaxis.major_label_text_font_size = '15px'
-        q.xaxis.major_label_text_font_style = "bold"
+        #q.xaxis.major_label_text_font_style = "bold"
 
         q.yaxis.major_label_text_color = 'dimgray'
         q.yaxis.major_label_text_font_size = '15px'
-        q.yaxis.major_label_text_font_style = "bold"
+        #q.yaxis.major_label_text_font_style = "bold"
 
         q.xaxis.axis_label_text_font_size = "13pt"
         q.yaxis.axis_label_text_font_size = "13pt"
-        q.xaxis.axis_label_text_font = 'QuickSand'
-        q.yaxis.axis_label_text_font = 'QuickSand'
+        q.xaxis.axis_label_text_font = 'Verdana'
+        q.yaxis.axis_label_text_font = 'Verdana'
 
-        q.title.text_font = 'QuickSand'
+        q.title.text_font = 'Verdana'
         q.axis.axis_label_text_font_style = "bold"
         q.grid.grid_line_alpha = 0.5
         q.title.text_font_size = '15pt'
@@ -307,7 +313,7 @@ def shaded_tseries(doc):
     
     
     
-    p = figure(tools=p_tools, x_axis_type="datetime", title= "Williamette Time-Series ", active_drag ='box_select')
+    p = figure(tools=p_tools, x_axis_type="datetime", title= "Williamette Time-Series ", active_drag ='box_select', toolbar_location ='above')
     tseries_plot(p)
     
     vars_dict = {'TREFHTMN': 'Minimum Temperature', 'TREFHTMX': 'Maximum Temperature',\
@@ -474,13 +480,18 @@ def shaded_tseries(doc):
     source.selected.on_change('indices', selection_change)
     source2.selected.on_change('indices', selection_change)
 
+    #toolbar_location: above
 
     doc.theme = Theme(json=yaml.load("""
+        global-styling:
+          css:
+            theme:
+              https://fonts.googleapis.com/css?family=Quicksand: { type: external }
+
         attrs:
             Figure:
                 background_fill_color: "#FFFFFF"
                 outline_line_color: "grey"
-                toolbar_location: above
                 height: 700
                 width: 1300
             Grid:
@@ -489,8 +500,9 @@ def shaded_tseries(doc):
             Title:
                 text_color: "black"
             Axis:
-                major_label_text_font: "Quicksand"
-
+                major_label_text_font: "Verdana"
+                major_label_text_font_style: "normal"
+                major_label_text_font_size: "18px"
     """, Loader=yaml.FullLoader))
     
 
