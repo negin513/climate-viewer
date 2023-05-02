@@ -31,6 +31,10 @@ from bokeh.models import (
     TableColumn,
 )
 from bokeh.layouts import row, column
+from data_processing import read_data, extract_time_information, get_shaded_data
+from bokeh.io import output_notebook, show, curdoc
+from bokeh.plotting import figure
+from bokeh.models import ColumnDataSource, HoverTool
 
 
 def in_notebook():
@@ -53,127 +57,18 @@ else:
     output_notebook()
 
 
-df = pd.read_csv("dummy.csv")
-col_names = df.columns[df.columns.str.contains(pat="TREF")]
 
-# -- convert K to F
-for col in col_names:
-    df[col] = (df[col] - 273.15) * 1.8 + 32
+input_file = "data/dummy.csv"
 
-# -- convert precip to inch/year
-col_names = df.columns[df.columns.str.contains(pat="PREC")]
-
-for col in col_names:
-    df[col] = (df[col]) * 1242399685.04 / 12
-
-
-df["time"] = pd.to_datetime(df["time"], infer_datetime_format=True)
-df_all = df
-
-# -- extract year, month, day, hour information from time
-df_all["year"] = df_all["time"].dt.year
-df_all["month"] = df_all["time"].dt.month
-df_all["day"] = df_all["time"].dt.day
-df_all["hour"] = df_all["time"].dt.hour
-print("df_all : ", df_all)
-
-
-def get_shaded_data(df_all, var, ens, freq="Monthly"):
-    # -- df_monthly: df seasonality
-
-    print("Calculating", freq, "average", "for", var, "...")
-    df = df_all
-    col_names = df.columns[df.columns.str.contains(pat=var)]
-
-    # -- average all columns with this variable name
-    # -- i.e. average over all ensembeles with this name:
-    this = df[col_names].mean(axis=1)
-    this_std = df[col_names].std(axis=1)
-
-    # -- create a df with average ensemble for that variable
-    df_this = pd.DataFrame(
-        {"time": df["time"], "year": df["year"], "month": df["month"], "var": this}
-    )
-
-    # -- ensemble min and max
-    df_this["var_lower"] = df[col_names].min(axis=1)
-    df_this["var_upper"] = df[col_names].max(axis=1)
-
-    # df_this["var_lower"] = this - this_std
-    # df_this["var_upper"] = this + this_std
-    print(df_this)
-
-    df_monthly = df_this.groupby("month").mean()
-    print(df_monthly)
-
-    mask = (df_this["year"] > 1999) & (df_this["year"] < 2021)
-    print(df_this.loc[mask])
-    df_selected = df_this.loc[mask]
-    df_monthly_selected = df_selected.groupby("month").mean()
-
-    if freq == "Monthly":
-        df_out = df_this
-    elif freq == "Annual":
-
-        df_annual = df.groupby("year").mean().reset_index()
-        df_annual["month"] = 6
-        df_annual["day"] = 30
-        df_annual["time"] = pd.to_datetime(df_annual[["year", "month", "day"]])
-
-        col_names = df.columns[df.columns.str.contains(pat=var)]
-        # print (col_names)
-        this = df_annual[col_names].mean(axis=1)
-        this_std = df_annual[col_names].std(axis=1)
-
-        df_out = pd.DataFrame(
-            {"time": df_annual["time"], "month": df_annual["month"], "var": this}
-        )
-        df_out["var_lower"] = df_annual[col_names].min(axis=1)
-        df_out["var_upper"] = df_annual[col_names].max(axis=1)
-        # df_out["var_lower"] = this - this_std
-        # df_out["var_upper"] = this + this_std
-
-    elif freq == "Decadal":
-
-        # print ("Calculating decadal average")
-
-        df_tmp = df.groupby([(df.time.dt.year // 10 * 10)]).mean().reset_index()
-        df_tmp["year"] = pd.DatetimeIndex(df_tmp["time"]).year
-
-        df_tmp["month"] = 6
-        df_tmp["day"] = 30
-        df_tmp["year"] = df_tmp["time"]
-        df_tmp["time"] = pd.to_datetime(df_tmp[["year", "month", "day"]])
-        col_names = df.columns[df.columns.str.contains(pat=var)]
-        print(df_tmp)
-        # print (col_names)
-        this = df_tmp[col_names].mean(axis=1)
-        this_std = df_tmp[col_names].std(axis=1)
-        this_std.iloc[-1] = this_std.iloc[-2]
-        df_out = pd.DataFrame(
-            {"time": df_tmp["time"], "month": df_tmp["month"], "var": this}
-        )
-
-        df_out["var_lower"] = df_tmp[col_names].min(axis=1)
-        df_out["var_upper"] = df_tmp[col_names].max(axis=1)
-        # df_out["var_lower"] = this - this_std
-        # df_out["var_upper"] = this + this_std
-        print(type(this))
-        print("this std -1")
-        # print (this_std[-1])
-        #df_out['var_lower'][-1] = df_out['var_lower'][-2]
-        #df_out['var_upper'][-1] = df_out['var_upper'][-2]
-
-    month_dict = dict(enumerate(calendar.month_abbr))
-    df_monthly["Month"] = df_monthly.index.map(month_dict)
-    df_monthly_selected["Month"] = df_monthly_selected.index.map(month_dict)
-    return df_out, df_monthly, df_monthly_selected
+# Read and process data
+df_all = read_data(input_file)
+df_all = extract_time_information(df_all)
 
 
 def shaded_tseries(doc):
     default_site = "ABBY"
     default_freq = "Annual"
-    defualt_var = "SOILWATER_10CM"
+    defualt_var = "Soil Moisture [kg/m2]"
     default_ens = "Average"
     default_var_desc = "Latent Heat Flux [W/m2]"
     df_new, df_monthly, df_monthly_selected = get_shaded_data(
@@ -195,13 +90,7 @@ def shaded_tseries(doc):
     plot_vars = ["TREFHTMN", "TREFHTMX", "PRECT", "SOILWATER_10CM"]
 
     # -- what are tools options
-    # tools = "pan,xwheel_zoom, wheel_zoom, box_zoom, undo, redo, save, reset,  hover, crosshair"
-    # tools = "pan, wheel_zoom, box_zoom,  undo, redo, save, reset, crosshair,xbox_select"
-
-    # p_tools = "pan, wheel_zoom, box_zoom, box_select, undo, redo, save, reset, crosshair"
     p_tools = "pan, wheel_zoom, box_zoom, box_select, undo, save, reset"
-
-    # q_tools = "save, undo, redo, reset, crosshair"
     q_tools = ""
 
     def tseries_plot(p):
@@ -519,9 +408,7 @@ def shaded_tseries(doc):
     )
 
 
-from bokeh.io import output_notebook, show, curdoc
-from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource, HoverTool
+
 
 # output_notebook()
 
