@@ -36,7 +36,7 @@ from bokeh.io import output_notebook, show, curdoc
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, HoverTool
 
-
+# -- only for running in the notebook:
 def in_notebook():
     from IPython import get_ipython
 
@@ -56,6 +56,21 @@ if ShowWebpage:
 else:
     output_notebook()
 
+# ----------------------------------
+
+# default values: 
+default_site = "ABBY"
+default_freq = "Annual"
+default_var = "SOILWATER_10CM"
+default_ens = "Average"
+default_var_desc = "Soil Moisture [kg/m²]"
+
+vars_dict = {
+        "TREFHTMN": "Minimum Temperature",
+        "TREFHTMX": "Maximum Temperature",
+        "PRECT": "Total  Precipitation",
+        "SOILWATER_10CM": "Soil Moisture (Top 10 cm) ",
+    }
 
 
 input_file = "data/dummy.csv"
@@ -65,14 +80,12 @@ df_all = read_data(input_file)
 df_all = extract_time_information(df_all)
 
 
+
 def shaded_tseries(doc):
-    default_site = "ABBY"
-    default_freq = "Annual"
-    defualt_var = "Soil Moisture [kg/m2]"
-    default_ens = "Average"
-    default_var_desc = "Latent Heat Flux [W/m2]"
+
+
     df_new, df_monthly, df_monthly_selected = get_shaded_data(
-        df_all, defualt_var, default_ens, default_freq
+        df_all, default_var, default_ens, default_freq
     )
     print("~~~~~~~~")
 
@@ -217,7 +230,7 @@ def shaded_tseries(doc):
 
     menu = Select(
         options=list(vars_dict2.keys()),
-        value=vars_dict[defualt_var],
+        value=vars_dict[default_var],
         title="Variable",
         css_classes=["custom_select"],
     )
