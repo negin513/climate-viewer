@@ -7,22 +7,24 @@ The dashboard allows interactive exploration of the dataset, including options t
 ## Requirements
 
 To run this dashboard, you'll need Python 3.7 or higher, along with the following libraries:
+****
 
 You can install these libraries using `conda`:
+***
 
 ## Getting Started
 
 1. Clone the repository:
 ```
-git clone https://github.com/<your-github-username>/cesm-lens2-bokeh-dashboard.git
+git clone https://github.com/negin513/climate-viewer.git
 ```
 2. Navigate to the project directory:
 ```
-cd cesm-lens2-bokeh-dashboard
+cd climate-viewer
 ```
 3. Run the Bokeh server:
 ```
-bokeh serve --show main.py
+bokeh serve --show climate-viewer/
 ```
 This command will start the Bokeh server and open the dashboard in your default web browser.
 
